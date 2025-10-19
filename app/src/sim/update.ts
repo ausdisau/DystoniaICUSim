@@ -1,4 +1,4 @@
-import { PhysiologyState, SimState, InterventionEvent } from './state'
+import type { PhysiologyState, SimState, InterventionEvent } from './state'
 
 export interface UpdateOutput {
   next: PhysiologyState

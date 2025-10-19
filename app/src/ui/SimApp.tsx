@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { create } from 'zustand'
-import { createInitialSimState, updateSim, defaultScenario, InterventionEvent, ScenarioConfig } from '../sim/state'
-import { SimState } from '../sim/state'
+import { createInitialSimState, defaultScenario, type InterventionEvent, type ScenarioConfig } from '../sim/state'
+import { updateSim } from '../sim'
+import type { SimState } from '../sim/state'
 import { ThreeScene } from './ThreeScene'
 import { loadScenarioFromYaml } from '../data'
+import { CoachOverlay } from './CoachOverlay'
 
 interface StoreState {
   sim: SimState
@@ -13,7 +15,7 @@ interface StoreState {
   setSpeed: (s: number) => void
 }
 
-export const useSimStore = create<StoreState>((set, get) => ({
+export const useSimStore = create<StoreState>((set) => ({
   sim: createInitialSimState(defaultScenario),
   toggleRun: () => set((s) => ({ sim: { ...s.sim, isRunning: !s.sim.isRunning } })),
   addIntervention: (e) => set((s) => ({ sim: { ...s.sim, interventions: [...s.sim.interventions, e] } })),
@@ -46,7 +48,7 @@ export function SimApp() {
   }
 
   const handleLoadYaml = async () => {
-    const url = '/src/data/example-scenario.yaml'
+    const url = '/data/example-scenario.yaml'
     try {
       const cfg: ScenarioConfig = await loadScenarioFromYaml(url)
       useSimStore.setState({ sim: { ...createInitialSimState(cfg), isRunning: sim.isRunning, speed: sim.speed } })
@@ -81,6 +83,7 @@ export function SimApp() {
         </div>
       </header>
       <ThreeScene />
+      <CoachOverlay />
 
       <section aria-label="Vitals" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <Vital label="HR" value={sim.physiology.heartRate.toFixed(0)} unit="bpm" />
