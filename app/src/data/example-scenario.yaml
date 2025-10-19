@@ -1,0 +1,30 @@
+id: dystonic-storm-v1
+title: Dystonic Storm - ICU Arrival
+description: >-
+  Training-only deterministic scenario of an 18-year-old female with primary dystonia
+  experiencing a dystonic storm. No dosing or medical advice.
+demographics:
+  ageYears: 18
+  sex: female
+  weightKg: 60
+  heightCm: 165
+initial:
+  t: 0
+  heartRate: 145
+  respRate: 28
+  spo2: 91
+  sbp: 95
+  dbp: 55
+  map: 68
+  temp: 39.6
+  gcsEye: 3
+  gcsVerbal: 2
+  gcsMotor: 4
+  dystoniaSeverity: 8.5
+scriptedEvents:
+  - at: 30
+    kind: oxygen-mask
+    note: "Apply oxygen via face mask"
+  - at: 60
+    kind: cooling-blanket
+    note: "Initiate cooling measures"
