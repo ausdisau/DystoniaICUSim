@@ -1,0 +1,131 @@
+meta:
+  id: medication_trial_02
+  title: "Medication adjustment with disability supports"
+  version: "1.0"
+  difficulty: intermediate
+  estimated_minutes: 15
+  learning_objectives:
+    - DS-01
+    - DS-02
+  roles:
+    - learner
+    - nurse
+    - pharmacy
+    - disability_specialist
+
+initial_state:
+  vitals:
+    hr: 88
+    bp_systolic: 112
+    temp_c: 36.8
+    spo2: 98
+  labs:
+    baclofen_level: low_subtherapeutic
+  flags:
+    baclofen_pump: true
+    aac_at_bedside: true
+    aac_reliable: true
+    caregiver_trained: true
+  consults:
+    pharmacy: active
+    pmr: active
+  narrative_notes:
+    - "Adult with dystonia and intrathecal baclofen pump; increased spasms after recent infection."
+  elapsed_minutes: 0
+
+start_node: ward_review
+
+nodes:
+  ward_review:
+    id: ward_review
+    narrative: |
+      On the ward, spasms are increasing but the patient is alert and using their communication board effectively.
+      Pharmacy flags subtherapeutic baclofen level. Pump interrogation is available.
+    choices:
+      - id: coordinated_titration
+        label: Coordinate pharmacy, neurology, and PM&R before pump adjustment; document baseline function
+        effects:
+          flags:
+            coordinated_plan: true
+          note: "Pre-adjustment communication method and mobility documented."
+        competency_tags:
+          - DS-01
+        score_delta:
+          functional_assessment: 2
+          interprofessional_coordination: 2
+        next_node: pump_decision
+      - id: rapid_titration
+        label: Increase pump rate immediately without reassessing communication or positioning needs
+        effects:
+          flags:
+            rapid_change: true
+        score_delta:
+          safety_escalation: -1
+        next_node: pump_decision
+
+  pump_decision:
+    id: pump_decision
+    narrative: |
+      After interdisciplinary review, you must decide how to proceed with therapy and supports.
+    choices:
+      - id: adjust_with_aac_plan
+        label: Adjust pump with pharmacy protocol; keep AAC and schedule caregiver re-training at bedside
+        effects:
+          flags:
+            pump_adjusted: true
+          note: "Caregiver training slot booked; AAC remains primary communication."
+        competency_tags:
+          - DS-02
+        score_delta:
+          accommodation_planning: 3
+          patient_centered_communication: 2
+        next_node: success_endpoint
+      - id: adjust_remove_board
+        label: Adjust pump and remove communication board during titration for 'safety'
+        violates_critical_rule: do_not_remove_AAC
+        effects:
+          flags:
+            aac_at_bedside: false
+        score_delta:
+          accommodation_planning: -4
+        next_node: partial_endpoint
+      - id: oral_only
+        label: Disable pump and switch to oral agents only without PM&R input
+        effects:
+          consults:
+            pmr: deferred
+        score_delta:
+          interprofessional_coordination: -2
+        next_node: partial_endpoint
+
+  success_endpoint:
+    id: success_endpoint
+    narrative: "Pump adjusted safely with preserved communication supports and caregiver engagement."
+    is_terminal: true
+
+  partial_endpoint:
+    id: partial_endpoint
+    narrative: "Medication changed but accommodation and coordination gaps remain."
+    is_terminal: true
+
+endpoints:
+  success_endpoint:
+    id: success_endpoint
+    outcome: success
+    narrative: |
+      Medication pathway optimized while disability supports remained intact and documented.
+    competency_tags:
+      - DS-01
+      - DS-02
+    score_delta:
+      accommodation_planning: 2
+
+  partial_endpoint:
+    id: partial_endpoint
+    outcome: partial
+    narrative: |
+      Clinical goals partially met; review communication access and PM&R coordination.
+    score_delta:
+      interprofessional_coordination: -1
+
+critical_misses: []

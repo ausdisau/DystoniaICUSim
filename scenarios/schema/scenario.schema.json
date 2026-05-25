@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dystonia-icu-sim.local/scenario.schema.json",
+  "title": "SimulationScenario",
+  "type": "object",
+  "required": ["meta", "initial_state", "start_node", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "version": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "estimated_minutes": { "type": "integer", "minimum": 1 },
+        "learning_objectives": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "ui_spec_id": { "type": "string" },
+        "mode": { "type": "string" }
+      }
+    },
+    "initial_state": { "type": "object" },
+    "start_node": { "type": "string" },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "narrative"],
+        "properties": {
+          "id": { "type": "string" },
+          "narrative": { "type": "string" },
+          "is_terminal": { "type": "boolean" },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label"],
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "effects": { "type": "object" },
+                "time_cost": { "type": "integer", "minimum": 0 },
+                "competency_tags": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "score_delta": {
+                  "type": "object",
+                  "additionalProperties": { "type": "integer" }
+                },
+                "hint": { "type": "string" },
+                "next_node": { "type": "string" },
+                "nursing_action_id": { "type": "string" },
+                "violates_critical_rule": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "when", "next_node"],
+        "properties": {
+          "id": { "type": "string" },
+          "when": { "type": "object" },
+          "next_node": { "type": "string" },
+          "narrative": { "type": "string" }
+        }
+      }
+    },
+    "endpoints": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "outcome", "narrative"],
+        "properties": {
+          "id": { "type": "string" },
+          "outcome": { "type": "string" },
+          "narrative": { "type": "string" },
+          "competency_tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "score_delta": {
+            "type": "object",
+            "additionalProperties": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "critical_misses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "when"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "when": { "type": "object" },
+          "penalty": {
+            "type": "object",
+            "additionalProperties": { "type": "integer" }
+          }
+        }
+      }
+    }
+  }
+}

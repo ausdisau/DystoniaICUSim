@@ -1,0 +1,288 @@
+meta:
+  id: status_dystonicus_01
+  title: "Status dystonicus in ICU"
+  version: "1.0"
+  difficulty: advanced
+  estimated_minutes: 25
+  learning_objectives:
+    - DS-01
+    - DS-02
+    - ICU-03
+  roles:
+    - learner
+    - nurse
+    - neurology
+    - disability_specialist
+    - pharmacy
+
+initial_state:
+  vitals:
+    hr: 118
+    bp_systolic: 145
+    temp_c: 38.2
+    spo2: 94
+  labs:
+    ck: 890
+    lactate: 2.1
+  flags:
+    dystonia_severe: true
+    hyperthermia: true
+    aac_at_bedside: true
+    aac_reliable: false
+  consults:
+    neurology: pending
+    pmr: not_called
+  narrative_notes:
+    - "28-year-old with primary generalized dystonia admitted for pneumonia; dystonic storm worsening over 6 hours."
+  elapsed_minutes: 0
+
+start_node: presentation
+
+nodes:
+  presentation:
+    id: presentation
+    narrative: |
+      The patient has sustained truncal and limb dystonic posturing with rising temperature and tachycardia.
+      Nursing reports the communication board is at the bedside but the patient cannot reliably use it during spasms.
+      What is your first action set?
+    choices:
+      - id: escalate_neuro_icu
+        label: Activate neuro-ICU pathway, call neurology, start cooling and monitor airway
+        effects:
+          flags:
+            neuro_pathway_active: true
+          consults:
+            neurology: active
+          elapsed_minutes: 15
+        time_cost: 15
+        competency_tags:
+          - ICU-03
+          - DS-01
+        score_delta:
+          safety_escalation: 2
+          functional_assessment: 1
+        next_node: first_line_rx
+      - id: delay_for_imaging
+        label: Delay treatment and order outpatient-style MRI first
+        effects:
+          elapsed_minutes: 45
+          flags:
+            treatment_delayed: true
+        time_cost: 45
+        competency_tags: []
+        score_delta:
+          safety_escalation: -2
+        next_node: worsening
+      - id: label_behavioural
+        label: Document event as behavioural agitation and restrict visitors
+        violates_critical_rule: do_not_call_event_behavioural
+        effects:
+          flags:
+            mislabelled_behavioural: true
+        score_delta:
+          patient_centered_communication: -3
+        next_node: worsening
+
+  first_line_rx:
+    id: first_line_rx
+    narrative: |
+      Neurology is at bedside. First-line agents are being prepared. Temperature remains elevated.
+      Disability specialist (PM&R) is available for consult. How do you proceed?
+    choices:
+      - id: pmr_consult
+        label: Request PM&R / disability specialist consult for functional baseline and communication plan
+        effects:
+          consults:
+            pmr: active
+          flags:
+            functional_baseline_documented: true
+          note: "Documented pre-morbid communication: eye-gaze board; requires re-test after storm."
+        competency_tags:
+          - DS-01
+          - DS-02
+        score_delta:
+          functional_assessment: 3
+          accommodation_planning: 2
+          interprofessional_coordination: 2
+        next_node: accommodation_plan
+      - id: skip_pmr
+        label: Proceed with medications only; document PM&R for discharge
+        effects:
+          consults:
+            pmr: deferred
+        score_delta:
+          interprofessional_coordination: -1
+        next_node: accommodation_plan
+      - id: remove_aac
+        label: Remove communication board to prevent patient injury
+        violates_critical_rule: do_not_remove_AAC
+        effects:
+          flags:
+            aac_at_bedside: false
+        score_delta:
+          accommodation_planning: -4
+        next_node: accommodation_plan
+
+  accommodation_plan:
+    id: accommodation_plan
+    narrative: |
+      Spasms are partially controlled but the patient remains unable to confirm reliable AAC use.
+      The team discusses disposition and family update. What do you prioritize?
+    choices:
+      - id: aac_plan
+        label: Keep AAC visible, plan re-test after stabilisation, stage family update with nurse
+        effects:
+          flags:
+            aac_retest_planned: true
+          note: "AAC re-test scheduled post-stabilisation; Mum/Dad contact pathway preserved."
+        competency_tags:
+          - DS-02
+        score_delta:
+          accommodation_planning: 3
+          patient_centered_communication: 2
+        next_node: disposition
+      - id: assume_aac_ok
+        label: Mark AAC as reliable for care decisions during this admission
+        violates_critical_rule: do_not_assume_AAC_reliable_during_event
+        effects:
+          flags:
+            aac_reliable: true
+        score_delta:
+          accommodation_planning: -3
+        next_node: disposition
+      - id: ceiling_now
+        label: Activate ceiling of care for this reversible airway-metabolic emergency
+        violates_critical_rule: do_not_activate_ceiling_of_care_for_reversible_airway_emergency
+        effects:
+          flags:
+            inappropriate_ceiling: true
+        score_delta:
+          safety_escalation: -4
+        next_node: disposition
+
+  worsening:
+    id: worsening
+    narrative: |
+      Over the next hour, temperature rises further and CK increases. The patient shows increased respiratory effort.
+      Automatic escalation is triggered.
+    choices:
+      - id: rescue_now
+        label: Call airway emergency and restart neuro-ICU pathway
+        effects:
+          consults:
+            anaesthesia: active
+            ent: active
+          flags:
+            airway_team_active: true
+        nursing_action_id: NURSE_CALL_AIRWAY_EMERGENCY
+        score_delta:
+          safety_escalation: 2
+        next_node: disposition
+      - id: wait
+        label: Continue current plan without escalation
+        effects:
+          elapsed_minutes: 30
+        score_delta:
+          safety_escalation: -2
+        next_node: failure_endpoint
+
+  disposition:
+    id: disposition
+    narrative: |
+      Storm is settling with cooling, neurology-led therapy, and nursing protection of lines and pressure areas.
+      Prepare handover documentation.
+    choices:
+      - id: complete_handover
+        label: Document sequence, rehab needs, AAC plan, and step-down criteria
+        effects:
+          flags:
+            handover_complete: true
+        nursing_action_id: NURSE_DOCUMENT_SEQUENCE
+        competency_tags:
+          - DS-01
+          - DS-02
+        score_delta:
+          functional_assessment: 2
+          accommodation_planning: 2
+        next_node: success_endpoint
+      - id: minimal_docs
+        label: Brief progress note only
+        score_delta:
+          functional_assessment: -1
+        next_node: partial_endpoint
+
+  success_endpoint:
+    id: success_endpoint
+    narrative: "Patient stabilised with documented functional baseline, accommodation plan, and safe escalation."
+    is_terminal: true
+
+  partial_endpoint:
+    id: partial_endpoint
+    narrative: "Patient stabilised but gaps remain in accommodation documentation and interprofessional coordination."
+    is_terminal: true
+
+  failure_endpoint:
+    id: failure_endpoint
+    narrative: "Delayed escalation led to worsening metabolic stress and unsafe care planning."
+    is_terminal: true
+
+transitions:
+  - id: auto_worsen_delayed
+    when:
+      all:
+        - path: flags.treatment_delayed
+          op: eq
+          value: true
+        - path: vitals.temp_c
+          op: gte
+          value: 38.5
+    next_node: worsening
+    narrative: "Temperature and CK trend worsen after treatment delay."
+
+endpoints:
+  success_endpoint:
+    id: success_endpoint
+    outcome: success
+    narrative: |
+      Excellent interprofessional management of status dystonicus with disability-informed documentation.
+      AAC remains visible with planned re-test; family update staged appropriately.
+    competency_tags:
+      - DS-01
+      - DS-02
+    score_delta:
+      safety_escalation: 2
+      patient_centered_communication: 1
+
+  partial_endpoint:
+    id: partial_endpoint
+    outcome: partial
+    narrative: |
+      Clinical storm controlled but disability-specialist documentation and accommodation planning were incomplete.
+    score_delta:
+      interprofessional_coordination: -1
+
+  failure_endpoint:
+    id: failure_endpoint
+    outcome: failure
+    narrative: |
+      Critical delays or mislabelling of the event compromised patient safety and communication access.
+    score_delta:
+      safety_escalation: -3
+
+critical_misses:
+  - id: hyperthermia_ignored
+    description: Prolonged hyperthermia without cooling or escalation
+    when:
+      all:
+        - path: flags.hyperthermia
+          op: eq
+          value: true
+        - path: elapsed_minutes
+          op: gte
+          value: 60
+        - path: flags.neuro_pathway_active
+          op: eq
+          value: false
+    penalty:
+      safety_escalation: -4
+      dystonia_management: -3
