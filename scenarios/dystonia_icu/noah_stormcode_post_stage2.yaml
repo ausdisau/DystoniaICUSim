@@ -1,0 +1,288 @@
+meta:
+  id: noah_stormcode_post_stage2
+  title: "StormCode: Noah post-stage-2 airway neuro-respiratory crisis"
+  version: "1.0"
+  difficulty: advanced
+  estimated_minutes: 30
+  mode: high_acuity_multimodal_simulation_dashboard
+  ui_spec_id: STORMCODE_NOAH_POST_STAGE2_UI_V1
+  learning_objectives:
+    - DS-01
+    - DS-02
+    - DS-03
+    - ICU-03
+  roles:
+    - nurse
+    - learner
+    - anaesthesia
+    - ent
+    - picu
+    - disability_specialist
+
+initial_state:
+  vitals:
+    hr: 132
+    bp_systolic: 98
+    temp_c: 38.6
+    spo2: 91
+    etco2: rising
+  labs: {}
+  flags:
+    storm_code_active: true
+    second_wave: true
+    airway_dislodged: true
+    aac_visible: true
+    aac_reliable: false
+    pain_button_used: true
+    too_sleepy_selected: true
+  consults:
+    anaesthesia: pending
+    ent: pending
+    picu: pending
+    neurology: active
+  narrative_notes:
+    - "Noah, post stage-2 recovery, second neuro-respiratory wave; airway tube dislodged from stoma."
+  elapsed_minutes: 0
+
+start_node: storm_active
+
+nodes:
+  storm_active:
+    id: storm_active
+    narrative: |
+      STORMCODE ACTIVE — ICU command dashboard (icuRoom asset).
+      Second dystonic/seizure-like wave. Airway tube dislodged from stoma. AAC visible but intentionality unconfirmed.
+      You are the bedside nurse. What do you do first?
+    choices:
+      - id: call_airway_emergency
+        label: Call airway emergency — anaesthesia, ENT, PICU, respiratory, neurology, surgical lead
+        nursing_action_id: NURSE_CALL_AIRWAY_EMERGENCY
+        effects:
+          consults:
+            anaesthesia: active
+            ent: active
+            picu: active
+            respiratory: active
+          flags:
+            airway_team_called: true
+          elapsed_minutes: 5
+        time_cost: 5
+        competency_tags:
+          - DS-03
+          - ICU-03
+        score_delta:
+          safety_escalation: 4
+          interprofessional_coordination: 3
+        next_node: protect_and_document
+      - id: behavioural_label
+        label: Chart as behavioural episode and restrict family from room
+        violates_critical_rule: do_not_call_event_behavioural
+        effects:
+          flags:
+            mislabelled_behavioural: true
+        score_delta:
+          patient_centered_communication: -4
+        next_node: compression_risk
+      - id: delay_for_infection
+        label: Complete full isolation barrier before any airway response
+        violates_critical_rule: do_not_allow_infection_control_to_delay_airway_rescue
+        effects:
+          elapsed_minutes: 20
+          flags:
+            airway_delayed: true
+        score_delta:
+          safety_escalation: -4
+        next_node: compression_risk
+
+  protect_and_document:
+    id: protect_and_document
+    narrative: |
+      Airway teams en route. EtCO2 and oxygenation trends on the airway-FONA panel require monitoring.
+      Select nursing actions while awaiting senior airway support.
+    choices:
+      - id: protect_body
+        label: Protect wound, PEG, lines, and pressure zones (non-procedural patient care)
+        nursing_action_id: NURSE_PROTECT_BODY
+        effects:
+          flags:
+            body_protected: true
+          note: "Wound dressing and PEG protection maintained; pressure zones watched."
+        score_delta:
+          functional_assessment: 2
+          safety_escalation: 1
+        next_node: aac_and_family
+      - id: aggressive_reposition
+        label: Reposition aggressively to stop movements without airway-spine control
+        violates_critical_rule: do_not_aggressively_reposition_without_airway_spine_control
+        effects:
+          flags:
+            unsafe_reposition: true
+        score_delta:
+          safety_escalation: -3
+        next_node: compression_risk
+      - id: document_sequence
+        label: Document event sequence on timeline (pain button, too sleepy, waves, airway disruption)
+        nursing_action_id: NURSE_DOCUMENT_SEQUENCE
+        effects:
+          flags:
+            sequence_documented: true
+        competency_tags:
+          - DS-01
+        score_delta:
+          functional_assessment: 3
+        next_node: aac_and_family
+
+  aac_and_family:
+    id: aac_and_family
+    narrative: |
+      AAC status panel shows device visible but intentionality unconfirmed. Family-ethics panel requests staged update.
+    choices:
+      - id: aac_retest_plan
+        label: Keep AAC visible; plan re-test after stabilisation; preserve Mum/Dad button
+        nursing_action_id: NURSE_AAC_RETEST_LATER
+        effects:
+          flags:
+            aac_retest_planned: true
+          note: "Backup communication card available; re-test after stabilisation."
+        competency_tags:
+          - DS-02
+        score_delta:
+          accommodation_planning: 4
+          patient_centered_communication: 2
+        next_node: picu_handover
+      - id: remove_aac
+        label: Remove AAC from bed space during event
+        violates_critical_rule: do_not_remove_AAC
+        effects:
+          flags:
+            aac_visible: false
+        score_delta:
+          accommodation_planning: -5
+        next_node: picu_handover
+      - id: restart_pain_button
+        label: Restart pain button without anaesthesia review
+        violates_critical_rule: do_not_restart_pain_button_without_pain_anaesthesia_review
+        effects:
+          flags:
+            pain_button_restarted: true
+        score_delta:
+          safety_escalation: -2
+        next_node: picu_handover
+
+  compression_risk:
+    id: compression_risk
+    narrative: |
+      Cardiopulmonary panel flags lung-spine-heart compression concern. Controlled reposition only.
+    choices:
+      - id: controlled_care
+        label: Controlled reposition with airway-spine control; escalate echo/cardiology if ordered
+        effects:
+          flags:
+            compression_addressed: true
+          consults:
+            anaesthesia: active
+        score_delta:
+          safety_escalation: 2
+        next_node: picu_handover
+      - id: ceiling_care
+        label: Activate ceiling of care instead of full rescue for reversible airway emergency
+        violates_critical_rule: do_not_activate_ceiling_of_care_for_reversible_airway_emergency
+        effects:
+          flags:
+            inappropriate_ceiling: true
+        score_delta:
+          safety_escalation: -5
+          patient_centered_communication: -3
+        next_node: failure_endpoint
+
+  picu_handover:
+    id: picu_handover
+    narrative: |
+      Airway stabilisation progressing. PICU transfer handover pending airway confirmation.
+    choices:
+      - id: prep_picu
+        label: Prepare high-acuity PICU transfer handover with disability and AAC plan
+        nursing_action_id: NURSE_PREP_PICU_TRANSFER
+        effects:
+          flags:
+            picu_handover_ready: true
+          consults:
+            picu: active
+        competency_tags:
+          - DS-01
+          - DS-02
+        score_delta:
+          interprofessional_coordination: 3
+          functional_assessment: 2
+        next_node: success_endpoint
+      - id: skip_handover
+        label: Transfer with verbal handover only
+        score_delta:
+          interprofessional_coordination: -2
+        next_node: partial_endpoint
+
+  success_endpoint:
+    id: success_endpoint
+    narrative: "StormCode resolved with airway rescue, AAC preserved, and PICU handover prepared."
+    is_terminal: true
+
+  partial_endpoint:
+    id: partial_endpoint
+    narrative: "Patient stabilised with documentation or coordination gaps."
+    is_terminal: true
+
+  failure_endpoint:
+    id: failure_endpoint
+    narrative: "Critical rule violations or delayed airway rescue compromised care."
+    is_terminal: true
+
+transitions:
+  - id: auto_compression
+    when:
+      all:
+        - path: flags.unsafe_reposition
+          op: eq
+          value: true
+    next_node: compression_risk
+    narrative: "Movement worsens; cardiopulmonary compression concern escalates."
+
+endpoints:
+  success_endpoint:
+    id: success_endpoint
+    outcome: success
+    narrative: |
+      Noah's reversible airway emergency managed per StormCode with AAC preserved,
+      family-ethics pathway respected, and PICU handover ready.
+    competency_tags:
+      - DS-01
+      - DS-02
+      - DS-03
+    score_delta:
+      safety_escalation: 2
+      accommodation_planning: 2
+
+  partial_endpoint:
+    id: partial_endpoint
+    outcome: partial
+    narrative: |
+      Clinical rescue achieved but handover or accommodation documentation incomplete.
+    score_delta:
+      interprofessional_coordination: -1
+
+  failure_endpoint:
+    id: failure_endpoint
+    outcome: failure
+    narrative: |
+      StormCode critical rules violated or airway rescue inappropriately delayed.
+    score_delta:
+      safety_escalation: -4
+
+critical_misses:
+  - id: airway_delay_miss
+    description: Airway rescue delayed for non-clinical barriers
+    when:
+      path: flags.airway_delayed
+      op: eq
+      value: true
+    penalty:
+      safety_escalation: -5

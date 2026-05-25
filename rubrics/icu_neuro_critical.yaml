@@ -1,0 +1,20 @@
+id: icu_neuro_critical
+name: ICU Neuro-Critical Care
+pass_threshold: 0.65
+bands:
+  excellent: 0.9
+  proficient: 0.65
+  developing: 0.5
+dimensions:
+  - id: dystonia_management
+    name: Dystonia and movement storm management
+    weight: 1.2
+  - id: airway_management
+    name: Airway and respiratory support
+    weight: 1.3
+  - id: pharmacologic_pathway
+    name: Pharmacologic escalation pathway
+    weight: 1.0
+  - id: monitoring
+    name: Monitoring and reassessment
+    weight: 1.0

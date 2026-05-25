@@ -1,0 +1,205 @@
+{
+  "stableId": "STORMCODE_NOAH_POST_STAGE2_UI_V1",
+  "title": "StormCode: Noah Post-Stage-2 Airway Neuro-Respiratory Crisis UI",
+  "mode": "high_acuity_multimodal_simulation_dashboard",
+  "assetMap": {
+    "generalWard": {
+      "role": "recovery_reflection_and_family_update_view",
+      "visualTone": "warm_human_lower_acuity",
+      "useCases": [
+        "family update scripts",
+        "QoL outcome review",
+        "post-crisis debrief",
+        "step-down readiness later"
+      ]
+    },
+    "icuRoom": {
+      "role": "stormcode_command_dashboard",
+      "visualTone": "dense_monitoring_high_acuity",
+      "useCases": [
+        "airway emergency",
+        "neuro-respiratory storm",
+        "cardiopulmonary compression watch",
+        "PICU transfer readiness"
+      ]
+    },
+    "operatingRoom": {
+      "role": "procedural_and_nursing_micro_timeout_layer",
+      "visualTone": "sterile_blue_role_based",
+      "useCases": [
+        "time-out sequence",
+        "nursing continuity board",
+        "pressure-zone checks",
+        "AAC recovery handover"
+      ]
+    }
+  },
+  "primaryClinicalState": {
+    "patient": "Noah",
+    "phase": "post_stage2_recovery_escalation",
+    "stormCodeActive": true,
+    "workingProblems": [
+      "second dystonic or seizure-like wave",
+      "airway tube dislodgement from stoma",
+      "FONA or stoma injury concern",
+      "airway-aware sedation active",
+      "anti-epileptic pathway active",
+      "lung-spine-heart compression concern",
+      "AAC reliability not confirmed",
+      "high-acuity PICU transfer pending"
+    ]
+  },
+  "uiZones": [
+    {
+      "id": "storm-header",
+      "components": [
+        "StormCode active badge",
+        "phase timer",
+        "event severity",
+        "current escalation tier",
+        "full rescue reversible banner"
+      ]
+    },
+    {
+      "id": "timeline",
+      "components": [
+        "pain button used",
+        "too sleepy selected",
+        "first neuro-respiratory wave",
+        "second wave",
+        "airway dislodgement",
+        "cardiopulmonary compression concern",
+        "PICU transfer handover"
+      ]
+    },
+    {
+      "id": "airway-fona-panel",
+      "components": [
+        "stoma visibility",
+        "FONA injury concern",
+        "EtCO2 trend",
+        "oxygenation trend",
+        "suction readiness",
+        "senior airway team status",
+        "ENT status"
+      ]
+    },
+    {
+      "id": "neuro-storm-panel",
+      "components": [
+        "seizure timer",
+        "dystonia timer",
+        "movement description",
+        "anti-epileptic pathway active",
+        "airway-aware sedation",
+        "sedation guardrails"
+      ]
+    },
+    {
+      "id": "cardiopulmonary-panel",
+      "components": [
+        "BP/perfusion trend",
+        "airway pressure trend",
+        "lung-spine-heart compression watch",
+        "controlled reposition only",
+        "echo/cardiology review if ordered"
+      ]
+    },
+    {
+      "id": "nursing-continuity-board",
+      "components": [
+        "wound dressing protection",
+        "pressure-zone watch",
+        "PEG and line protection",
+        "AAC visible",
+        "AAC re-test required",
+        "family staged update",
+        "ceiling-of-care in pack",
+        "no fake comfort"
+      ]
+    },
+    {
+      "id": "aac-status-panel",
+      "components": [
+        "AAC visible",
+        "AAC intentionality unconfirmed",
+        "backup card available",
+        "re-test after stabilisation",
+        "Mum/Dad button preserved"
+      ]
+    },
+    {
+      "id": "family-ethics-panel",
+      "components": [
+        "family update owner",
+        "video pathway",
+        "essential-support exception",
+        "full rescue reversible",
+        "irreversible harm limit only after senior review"
+      ]
+    }
+  ],
+  "criticalRules": [
+    "do_not_call_event_behavioural",
+    "do_not_remove_AAC",
+    "do_not_assume_AAC_reliable_during_event",
+    "do_not_activate_ceiling_of_care_for_reversible_airway_emergency",
+    "do_not_allow_infection_control_to_delay_airway_rescue",
+    "do_not_restart_pain_button_without_pain_anaesthesia_review",
+    "do_not_aggressively_reposition_without_airway_spine_control"
+  ],
+  "nursingActions": [
+    {
+      "id": "NURSE_CALL_AIRWAY_EMERGENCY",
+      "label": "Call airway emergency",
+      "requiredTeams": [
+        "anaesthesia",
+        "ENT",
+        "PICU",
+        "respiratory",
+        "neurology",
+        "surgical lead"
+      ]
+    },
+    {
+      "id": "NURSE_PROTECT_BODY",
+      "label": "Protect wound, PEG, lines, pressure zones",
+      "mode": "non-procedural_patient_care"
+    },
+    {
+      "id": "NURSE_DOCUMENT_SEQUENCE",
+      "label": "Document event sequence",
+      "sequenceFields": [
+        "pain_button_used",
+        "too_sleepy",
+        "first_wave",
+        "second_wave",
+        "airway_disruption",
+        "sedation_pathway",
+        "cardiopulmonary_compression_concern"
+      ]
+    },
+    {
+      "id": "NURSE_AAC_RETEST_LATER",
+      "label": "Keep AAC visible and re-test after stabilisation",
+      "status": "required"
+    },
+    {
+      "id": "NURSE_PREP_PICU_TRANSFER",
+      "label": "Prepare high-acuity PICU transfer handover",
+      "status": "pending_airway_stabilisation"
+    }
+  ],
+  "visualTone": {
+    "style": "dark_clinical_command_dashboard",
+    "accent": "storm_red_teal_blue",
+    "layout": "three_lane_crisis_board",
+    "avoid": [
+      "graphic injury",
+      "surgical technique",
+      "medication doses",
+      "ventilator settings",
+      "panic aesthetics"
+    ]
+  }
+}
